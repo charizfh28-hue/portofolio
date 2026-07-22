@@ -104,28 +104,37 @@ export default function App() {
   };
 
   // Admin Panel Callbacks with Firestore persistence
-  const handleSaveProfile = async (updated: ProfileData) => {
-    setProfile(updated);
-    localStorage.setItem('portfolio_profile', JSON.stringify(updated));
-    await savePortfolioToFirestore({ profile: updated });
-  };
+  const handleSaveAllData = async (
+    profileUpdated: ProfileData,
+    skillsUpdated: Skill[],
+    projectsUpdated: Project[],
+    experiencesUpdated: Experience[]
+  ) => {
+    // 1. Update local react state
+    setProfile(profileUpdated);
+    setSkills(skillsUpdated);
+    setProjects(projectsUpdated);
+    setExperiences(experiencesUpdated);
 
-  const handleSaveSkills = async (updated: Skill[]) => {
-    setSkills(updated);
-    localStorage.setItem('portfolio_skills', JSON.stringify(updated));
-    await savePortfolioToFirestore({ skills: updated });
-  };
+    // 2. Update local storage
+    localStorage.setItem('portfolio_profile', JSON.stringify(profileUpdated));
+    localStorage.setItem('portfolio_skills', JSON.stringify(skillsUpdated));
+    localStorage.setItem('portfolio_projects', JSON.stringify(projectsUpdated));
+    localStorage.setItem('portfolio_experiences', JSON.stringify(experiencesUpdated));
 
-  const handleSaveProjects = async (updated: Project[]) => {
-    setProjects(updated);
-    localStorage.setItem('portfolio_projects', JSON.stringify(updated));
-    await savePortfolioToFirestore({ projects: updated });
-  };
-
-  const handleSaveExperiences = async (updated: Experience[]) => {
-    setExperiences(updated);
-    localStorage.setItem('portfolio_experiences', JSON.stringify(updated));
-    await savePortfolioToFirestore({ experiences: updated });
+    // 3. Save to Firestore in a single write operation to prevent race conditions & rollbacks!
+    try {
+      await savePortfolioToFirestore({
+        profile: profileUpdated,
+        skills: skillsUpdated,
+        projects: projectsUpdated,
+        experiences: experiencesUpdated,
+      });
+      console.log('Successfully saved all portfolio changes to Firestore');
+    } catch (error) {
+      console.error('Failed to save to Firestore:', error);
+      alert('Gagal menyinkronkan ke database cloud (Firestore). Pastikan ukuran foto tidak terlalu besar!');
+    }
   };
 
   const handleResetAll = async () => {
@@ -201,10 +210,7 @@ export default function App() {
         skills={skills}
         projects={projects}
         experiences={experiences}
-        onSaveProfile={handleSaveProfile}
-        onSaveSkills={handleSaveSkills}
-        onSaveProjects={handleSaveProjects}
-        onSaveExperiences={handleSaveExperiences}
+        onSaveAll={handleSaveAllData}
         onResetAll={handleResetAll}
       />
     </div>

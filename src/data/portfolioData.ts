@@ -1,8 +1,6 @@
 import { ProfileData, Skill, Project, Experience } from '../types';
 
 import charizCvPhoto from '../assets/images/chariz_photo_cv_1784691065523.jpg';
-import dashboardImg from '../assets/images/project_dashboard_1784689295999.jpg';
-import ecommerceImg from '../assets/images/project_ecommerce_1784689307039.jpg';
 
 export const initialProfileData: ProfileData = {
   name: 'CHARIZ FAGHRUN N',
@@ -79,7 +77,7 @@ export const projectsData: Project[] = [
     description: 'Aplikasi manajemen data supplier, perbandingan harga produk, dan pencatatan transaksi pembelian barang perusahaan.',
     longDescription: 'Proyek sistem manajemen pengadaan barang yang dirancang untuk efisiensi pemilihan supplier terbaik, kalkulasi anggaran pembelian, serta pelaporan inventaris stok secara otomatis dan terorganisir.',
     category: 'web',
-    image: dashboardImg,
+    image: charizCvPhoto,
     tags: ['Procurement', 'Excel', 'React', 'Tailwind CSS', 'Data Analytics'],
     liveUrl: 'https://example.com/procurement-app',
     githubUrl: 'https://github.com/example/procurement-system',
@@ -97,7 +95,7 @@ export const projectsData: Project[] = [
     description: 'Situs web portofolio pribadi modern dengan animasi interaktif, mode gelap/terang, dan panel admin terautentikasi.',
     longDescription: 'Situs web interaktif yang menampilkan profil lengkap Chariz Faghrun N, riwayat pendidikan, pengalaman magang di PT Arwana Citramulia Tbk, serta daftar skill utama.',
     category: 'fullstack',
-    image: ecommerceImg,
+    image: charizCvPhoto,
     tags: ['React', 'TypeScript', 'Tailwind CSS', 'Admin Panel', 'Motion'],
     liveUrl: 'https://example.com/chariz-portfolio',
     githubUrl: 'https://github.com/example/chariz-portfolio',
@@ -115,7 +113,7 @@ export const projectsData: Project[] = [
     description: 'Sistem kasir dan pencatatan stok barang sederhana untuk membantu bisnis lokal mengelola penjualan harian.',
     longDescription: 'Aplikasi pembukuan bisnis ritel UMKM yang memudahkan pencatatan transaksi masuk-keluar, cetak nota, dan pemantauan keuntungan bulanan.',
     category: 'web',
-    image: 'https://images.unsplash.com/photo-1556742049-0a670f4a45a7?q=80&w=1000&auto=format&fit=crop',
+    image: charizCvPhoto,
     tags: ['React', 'Tailwind CSS', 'Local State', 'Financial Analytics'],
     liveUrl: 'https://example.com/umkm-pos',
     githubUrl: 'https://github.com/example/umkm-pos',

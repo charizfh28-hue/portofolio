@@ -36,6 +36,58 @@ import {
 } from 'lucide-react';
 import { ProfileData, Skill, Project, Experience, SocialLink } from '../types';
 
+/**
+ * Utility to compress any image to maximum 650x650px size and 0.7 quality.
+ * This keeps the output under 50-80KB, well within Firestore's 1MB limit.
+ */
+function compressImage(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = (event) => {
+      const img = new Image();
+      img.src = event.target?.result as string;
+      img.onload = () => {
+        const maxWidth = 650;
+        const maxHeight = 650;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > maxWidth) {
+            height = Math.round((height * maxWidth) / width);
+            width = maxWidth;
+          }
+        } else {
+          if (height > maxHeight) {
+            width = Math.round((width * maxHeight) / height);
+            height = maxHeight;
+          }
+        }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          resolve(event.target?.result as string); // fallback to original on canvas error
+          return;
+        }
+
+        ctx.drawImage(img, 0, 0, width, height);
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+        resolve(dataUrl);
+      };
+      img.onerror = (err) => {
+        reject(err);
+      };
+    };
+    reader.onerror = (err) => {
+      reject(err);
+    };
+  });
+}
+
 interface AdminPanelModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -43,10 +95,12 @@ interface AdminPanelModalProps {
   skills: Skill[];
   projects: Project[];
   experiences: Experience[];
-  onSaveProfile: (updated: ProfileData) => void;
-  onSaveSkills: (updated: Skill[]) => void;
-  onSaveProjects: (updated: Project[]) => void;
-  onSaveExperiences: (updated: Experience[]) => void;
+  onSaveAll: (
+    profile: ProfileData,
+    skills: Skill[],
+    projects: Project[],
+    experiences: Experience[]
+  ) => void;
   onResetAll: () => void;
 }
 
@@ -57,10 +111,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
   skills,
   projects,
   experiences,
-  onSaveProfile,
-  onSaveSkills,
-  onSaveProjects,
-  onSaveExperiences,
+  onSaveAll,
   onResetAll,
 }) => {
   // Admin Authentication State
@@ -114,10 +165,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
   };
 
   const handleSaveAll = () => {
-    onSaveProfile(profileForm);
-    onSaveSkills(skillsForm);
-    onSaveProjects(projectsForm);
-    onSaveExperiences(experiencesForm);
+    onSaveAll(profileForm, skillsForm, projectsForm, experiencesForm);
     onClose();
   };
 
@@ -531,16 +579,22 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
                             <input
                               type="file"
                               accept="image/*"
-                              onChange={(e) => {
+                              onChange={async (e) => {
                                 const file = e.target.files?.[0];
                                 if (file) {
-                                  const reader = new FileReader();
-                                  reader.onloadend = () => {
-                                    if (reader.result) {
-                                      setProfileForm({ ...profileForm, avatarUrl: reader.result as string });
-                                    }
-                                  };
-                                  reader.readAsDataURL(file);
+                                  try {
+                                    const compressedDataUrl = await compressImage(file);
+                                    setProfileForm({ ...profileForm, avatarUrl: compressedDataUrl });
+                                  } catch (err) {
+                                    console.error("Error compressing profile image:", err);
+                                    const reader = new FileReader();
+                                    reader.onloadend = () => {
+                                      if (reader.result) {
+                                        setProfileForm({ ...profileForm, avatarUrl: reader.result as string });
+                                      }
+                                    };
+                                    reader.readAsDataURL(file);
+                                  }
                                 }
                               }}
                               className="block w-full text-xs text-slate-400 file:mr-3 file:py-2 file:px-3.5 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-cyan-500/20 file:text-cyan-300 hover:file:bg-cyan-500/30 cursor-pointer bg-slate-950 p-1.5 rounded-xl border border-slate-800"
@@ -1031,18 +1085,26 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
                                   <input
                                     type="file"
                                     accept="image/*"
-                                    onChange={(e) => {
+                                    onChange={async (e) => {
                                       const file = e.target.files?.[0];
                                       if (file) {
-                                        const reader = new FileReader();
-                                        reader.onloadend = () => {
-                                          if (reader.result) {
-                                            const updated = [...projectsForm];
-                                            updated[idx].image = reader.result as string;
-                                            setProjectsForm(updated);
-                                          }
-                                        };
-                                        reader.readAsDataURL(file);
+                                        try {
+                                          const compressedDataUrl = await compressImage(file);
+                                          const updated = [...projectsForm];
+                                          updated[idx].image = compressedDataUrl;
+                                          setProjectsForm(updated);
+                                        } catch (err) {
+                                          console.error("Error compressing project image:", err);
+                                          const reader = new FileReader();
+                                          reader.onloadend = () => {
+                                            if (reader.result) {
+                                              const updated = [...projectsForm];
+                                              updated[idx].image = reader.result as string;
+                                              setProjectsForm(updated);
+                                            }
+                                          };
+                                          reader.readAsDataURL(file);
+                                        }
                                       }
                                     }}
                                     className="block w-full text-[11px] text-slate-500 dark:text-slate-400 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-[11px] file:font-semibold file:bg-cyan-500/20 file:text-cyan-400 hover:file:bg-cyan-500/30 cursor-pointer bg-white dark:bg-slate-950 p-1 rounded-lg border border-slate-200 dark:border-slate-800"
