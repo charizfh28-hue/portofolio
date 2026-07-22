@@ -18,6 +18,11 @@ import {
 } from './data/portfolioData';
 
 import { ThemeMode, ProfileData, Project, Skill, Experience } from './types';
+import {
+  subscribeToPortfolio,
+  savePortfolioToFirestore,
+  resetPortfolioInFirestore,
+} from './lib/firebase';
 
 export default function App() {
   const [theme, setTheme] = useState<ThemeMode>('dark');
@@ -51,6 +56,37 @@ export default function App() {
   const [isCVOpen, setIsCVOpen] = useState<boolean>(false);
   const [isAdminOpen, setIsAdminOpen] = useState<boolean>(false);
 
+  // Real-time Firestore sync across all devices
+  useEffect(() => {
+    const defaultPortfolio = {
+      profile: initialProfileData,
+      skills: skillsData,
+      projects: projectsData,
+      experiences: experiencesData,
+    };
+
+    const unsubscribe = subscribeToPortfolio((data) => {
+      if (data.profile) {
+        setProfile(data.profile);
+        localStorage.setItem('portfolio_profile', JSON.stringify(data.profile));
+      }
+      if (data.skills) {
+        setSkills(data.skills);
+        localStorage.setItem('portfolio_skills', JSON.stringify(data.skills));
+      }
+      if (data.projects) {
+        setProjects(data.projects);
+        localStorage.setItem('portfolio_projects', JSON.stringify(data.projects));
+      }
+      if (data.experiences) {
+        setExperiences(data.experiences);
+        localStorage.setItem('portfolio_experiences', JSON.stringify(data.experiences));
+      }
+    }, defaultPortfolio);
+
+    return () => unsubscribe();
+  }, []);
+
   // Sync theme class to html element
   useEffect(() => {
     const root = document.documentElement;
@@ -67,28 +103,32 @@ export default function App() {
     setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
   };
 
-  // Admin Panel Callbacks
-  const handleSaveProfile = (updated: ProfileData) => {
+  // Admin Panel Callbacks with Firestore persistence
+  const handleSaveProfile = async (updated: ProfileData) => {
     setProfile(updated);
     localStorage.setItem('portfolio_profile', JSON.stringify(updated));
+    await savePortfolioToFirestore({ profile: updated });
   };
 
-  const handleSaveSkills = (updated: Skill[]) => {
+  const handleSaveSkills = async (updated: Skill[]) => {
     setSkills(updated);
     localStorage.setItem('portfolio_skills', JSON.stringify(updated));
+    await savePortfolioToFirestore({ skills: updated });
   };
 
-  const handleSaveProjects = (updated: Project[]) => {
+  const handleSaveProjects = async (updated: Project[]) => {
     setProjects(updated);
     localStorage.setItem('portfolio_projects', JSON.stringify(updated));
+    await savePortfolioToFirestore({ projects: updated });
   };
 
-  const handleSaveExperiences = (updated: Experience[]) => {
+  const handleSaveExperiences = async (updated: Experience[]) => {
     setExperiences(updated);
     localStorage.setItem('portfolio_experiences', JSON.stringify(updated));
+    await savePortfolioToFirestore({ experiences: updated });
   };
 
-  const handleResetAll = () => {
+  const handleResetAll = async () => {
     setProfile(initialProfileData);
     setSkills(skillsData);
     setProjects(projectsData);
@@ -97,6 +137,12 @@ export default function App() {
     localStorage.removeItem('portfolio_skills');
     localStorage.removeItem('portfolio_projects');
     localStorage.removeItem('portfolio_experiences');
+    await resetPortfolioInFirestore({
+      profile: initialProfileData,
+      skills: skillsData,
+      projects: projectsData,
+      experiences: experiencesData,
+    });
   };
 
   return (

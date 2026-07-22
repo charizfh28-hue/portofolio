@@ -1,0 +1,38 @@
+{
+  "entities": {
+    "PortfolioData": {
+      "title": "PortfolioData",
+      "description": "Stores profile, skills, projects, and experiences for the portfolio",
+      "type": "object",
+      "properties": {
+        "profile": {
+          "type": "object",
+          "description": "Profile information of the portfolio owner"
+        },
+        "skills": {
+          "type": "array",
+          "description": "List of technical skills"
+        },
+        "projects": {
+          "type": "array",
+          "description": "List of portfolio projects"
+        },
+        "experiences": {
+          "type": "array",
+          "description": "List of work and education experiences"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "ISO timestamp of last update"
+        }
+      },
+      "required": ["profile", "skills", "projects", "experiences"]
+    }
+  },
+  "firestore": {
+    "portfolio/data": {
+      "entity": "PortfolioData",
+      "description": "Global portfolio configuration document"
+    }
+  }
+}
